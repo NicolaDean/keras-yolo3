@@ -13,10 +13,59 @@ from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
 
-from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body, yolo_loss, box_iou
 from yolo3.utils import letterbox_image
 import os
 import tensorflow as tf
+
+
+def compute_map():
+            '''
+            TODO
+            MAP tutorial
+            https://learnopencv.com/mean-average-precision-map-object-detection-model-evaluation-metric/
+            IOU tutorial
+            #https://www.kaggle.com/code/vbookshelf/keras-iou-metric-implemented-without-tensor-drama
+            Per ogni box della true voglio trovare dei box sovrapposti con stessa classe
+            (per ogni box prendo in considerazione solo il miglior iou! (per evitare fake))
+
+            Se un box rimane senza match => False Negative
+            
+            Se iou > 0.5 con stessa classe => TP
+            Se iou < 0.5 con stessa classe => FP
+            Se iou == 0 FN
+        
+            TN non si puo calcolare
+
+            P  =  TP/(TP + FP)  #Precision
+            R = TP / (TP + FN)  #Recall
+            
+            '''
+            pass
+def compute_confusion_matrix(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
+    pass
+def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
+
+
+    iou_res = 0
+    i = 0
+    #For each True label extract the best matching box (Same class and best IOU)
+    for b_true,class_true in zip(y_true_boxes,y_true_classes):
+        iou_tmp = 0
+
+        for b_pred,pred_score,pred_class in zip(out_boxes,out_scores,out_classes):
+            #print(f"[{pred_class}] vs [{class_true}]")
+            if pred_class == class_true:
+                tmp = box_iou(b_true,b_pred)
+                if tmp > iou_tmp:
+                    iou_tmp = tmp
+        print(f"Label [{i}] has IOU =  [{iou_tmp}]")
+        iou_res += iou_tmp
+        i += 1
+    if len(y_true_classes) != 0:
+        return iou_res / len(y_true_classes)
+    else:
+        return None
 
 class YOLO(object):
     _defaults = {
@@ -42,6 +91,7 @@ class YOLO(object):
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
+        print(self.class_names)
         self.boxes, self.scores, self.classes = self.generate()
 
     def _get_class(self):
@@ -99,7 +149,7 @@ class YOLO(object):
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
-    def detect_image(self, image):
+    def detect_image(self, image,y_true = None):
         start = timer()
 
         if self.model_image_size != (None, None):
@@ -108,32 +158,49 @@ class YOLO(object):
             boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
         else:
             new_image_size = (image.width - (image.width % 32),
-                              image.height - (image.height % 32))
+                                image.height - (image.height % 32))
             boxed_image = letterbox_image(image, new_image_size)
+
         image_data = np.array(boxed_image, dtype='float32')
 
         print(image_data.shape)
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
-
+            
         yolo_out = self.yolo_model.predict(image_data)
+        
+
+        '''
+        if y_true:
+            print(f"Banana = {self.class_names}")
+            argss = [yolo_out[0],yolo_out[1],yolo_out[2],y_true[0],y_true[1],y_true[2]]
+            loss = yolo_loss(argss,self.anchors,len(self.class_names),0.5)
+            print(f"LOSS = [{loss}]")
+        '''
+
         self.input_image_shape =  [image.size[1], image.size[0]]
         out_boxes, out_scores, out_classes = yolo_eval(yolo_out, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
+        y_true = tf.constant(y_true,dtype=tf.float32)
+        print("PRED")
+        print(out_boxes)
+        print("YTRUE")
+        print(y_true[0])
         
-        '''
-        out_boxes, out_scores, out_classes = self.sess.run(
-            [self.boxes, self.scores, self.classes],
-            feed_dict={
-                self.yolo_model.input: image_data,
-                self.input_image_shape: [image.size[1], image.size[0]],
-                K.learning_phase(): 0
-            })
-        '''
+        y_true          = np.hsplit(y_true[0],[4,5])
+        y_true_boxes    = y_true[0]
+        y_true_classes  = y_true[1]
+
+        iou_score = compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes)
+        #iou_score = compute_iou(out_boxes,out_classes,out_boxes, out_scores, out_classes) => SHOUD OUTPUT 1 (Testing purpose)
+
+        print(f"=========[ IOU = {iou_score} ]=========")
+
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
         thickness = (image.size[0] + image.size[1]) // 300
+
 
         for i, c in reversed(list(enumerate(out_classes))):
             predicted_class = self.class_names[c]

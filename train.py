@@ -178,13 +178,18 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
             if i==0:
                 np.random.shuffle(annotation_lines)
             image, box = get_random_data(folder_path,annotation_lines[i], input_shape, random=True)
+            box = box[~np.all(box == 0, axis=1)]
+            #print(batch_size)
+            #print(box)
             image_data.append(image)
             box_data.append(box)
             i = (i+1) % n
         image_data = np.array(image_data)
         box_data = np.array(box_data)
+        
         y_true = preprocess_true_boxes(box_data, input_shape, anchors, num_classes)
-        yield [image_data, *y_true], np.zeros(batch_size)
+
+        yield [image_data, *y_true], np.zeros(batch_size), box_data
 
 def data_generator_wrapper(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes):
     n = len(annotation_lines)
