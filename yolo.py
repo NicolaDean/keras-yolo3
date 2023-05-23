@@ -46,7 +46,8 @@ def compute_confusion_matrix(y_true_boxes,y_true_classes,out_boxes, out_scores, 
     pass
 def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
 
-
+    #TODO FIX => DO THE OPPOSITE => FOR EACH PREDICTION CHECK FOR A LABEL (and return the list of max iou for each box)
+    #This will help in FP,TP,FN computation => therfore help computing Precision,Recall,F1 and finaly MAP score
     iou_res = 0
     i = 0
     #For each True label extract the best matching box (Same class and best IOU)
