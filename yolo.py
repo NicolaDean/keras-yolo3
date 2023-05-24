@@ -42,7 +42,8 @@ def compute_map():
             
             '''
             pass
-def compute_confusion_matrix(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
+
+def compute_batched_iou(y_true,out_boxes, out_scores, out_classes):
     pass
 def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
 
