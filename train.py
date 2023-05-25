@@ -178,7 +178,7 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
             if i==0:
                 np.random.shuffle(annotation_lines)
             image, box = get_random_data(folder_path,annotation_lines[i], input_shape, random=True)
-            box = box[~np.all(box == 0, axis=1)]
+            #box = box[~np.all(box == 0, axis=1)]
             #print(batch_size)
             #print(box)
             image_data.append(image)

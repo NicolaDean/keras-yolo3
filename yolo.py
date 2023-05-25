@@ -61,7 +61,7 @@ def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
                 tmp = box_iou(b_true,b_pred)
                 if tmp > iou_tmp:
                     iou_tmp = tmp
-        print(f"Label [{i}] has IOU =  [{iou_tmp}]")
+        #print(f"Label [{i}] has IOU =  [{iou_tmp}]")
         iou_res += iou_tmp
         i += 1
     if len(y_true_classes) != 0:
@@ -183,24 +183,24 @@ class YOLO(object):
         self.input_image_shape =  [image.size[1], image.size[0]]
         out_boxes, out_scores, out_classes = yolo_eval(yolo_out, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
         y_true = tf.constant(y_true,dtype=tf.float32)
-        print("PRED")
-        print(out_boxes)
-        print("YTRUE")
-        print(y_true[0])
-        
-        y_true          = np.hsplit(y_true[0],[4,5])
-        y_true_boxes    = y_true[0]
-        y_true_classes  = y_true[1]
+        #print("PRED")
+        #print(out_boxes)
+        #print("YTRUE")
+        #print(y_true[0])
+        if y_true:
+            y_true          = np.hsplit(y_true[0],[4,5])
+            y_true_boxes    = y_true[0]
+            y_true_classes  = y_true[1]
 
-        iou_score = compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes)
-        #iou_score = compute_iou(out_boxes,out_classes,out_boxes, out_scores, out_classes) => SHOUD OUTPUT 1 (Testing purpose)
+            iou_score = compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes)
+            #iou_score = compute_iou(out_boxes,out_classes,out_boxes, out_scores, out_classes) => SHOUD OUTPUT 1 (Testing purpose)
 
-        print(f"=========[ IOU = {iou_score} ]=========")
+            print(f"=========[ IOU = {iou_score} ]=========")
 
-        print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
+            print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
-        font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
-                    size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+        #font = ImageFont.truetype(font='font/FiraMono-Medium.otf',size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+        font = font = ImageFont.load_default()
         thickness = (image.size[0] + image.size[1]) // 300
 
 
@@ -238,6 +238,9 @@ class YOLO(object):
 
         end = timer()
         print(end - start)
+
+        if not y_true:
+            return image,out_boxes, out_scores, out_classes
         return image
 
     def close_session(self):
@@ -265,6 +268,7 @@ def detect_video(yolo, video_path, output_path=""):
         image = Image.fromarray(frame)
         image = yolo.detect_image(image)
         result = np.asarray(image)
+        
         curr_time = timer()
         exec_time = curr_time - prev_time
         prev_time = curr_time
