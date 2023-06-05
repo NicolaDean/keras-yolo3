@@ -43,8 +43,72 @@ def compute_map():
             '''
             pass
 
-def compute_batched_iou(y_true,out_boxes, out_scores, out_classes):
-    pass
+def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5):
+
+    out_boxes   = out_boxes.numpy().tolist()
+    out_classes = out_classes.numpy().tolist()
+    TP = 0
+    FP = 0
+    FN = 0
+    #TN Do not exist in Object detection => Is the background
+
+    precision = 0
+    recall    = 0
+    f1_score  = 0
+
+    #For each True label extract the best matching box (Same class and best IOU)
+    for b_true,class_true in zip(y_true_boxes,y_true_classes):
+        iou_tmp = iou_th
+        curr_sel_idx = None
+        idx = 0
+        for b_pred,pred_class in zip(out_boxes,out_classes):
+
+            #print(f"[{pred_class}] vs [{class_true}]")
+            if pred_class == class_true:
+                tmp = box_iou(b_true,b_pred)
+                #Check if this BB is a best match than the previous one
+                if tmp > iou_tmp:
+                    iou_tmp = tmp
+                    curr_sel_idx = idx
+            idx += 1
+        #If match found remove it from expected Bounding Box
+        if iou_tmp > iou_th:
+            out_boxes.pop(curr_sel_idx)
+            out_classes.pop(curr_sel_idx)
+            TP += 1 #True Positive are golden box with match
+        else:
+            FN += 1 #False Negative are golden box without match
+    
+    #False Positive are all Resulted box without a match in the golden list.
+    #if len(out_boxes) != 0:
+    FP = len(out_boxes)
+
+    #Compute Precision, Recall, F1_score
+    if TP + FP != 0:
+        precision = TP / (TP + FP) 
+    if TP + FN != 0:
+        recall    = TP / (TP + FN)
+    if precision + recall != 0:
+        f1_score  = (2*precision*recall)/(precision + recall)
+
+    print("-"*20)
+    print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
+    print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}]")
+    print("-"*20)
+
+    return precision,recall,f1_score
+
+    ''' 
+    #For each Expected label extract the best matching box with True Label(Same class and best IOU)
+    for b_pred,pred_class in zip(out_boxes,out_classes):
+        iou_tmp = iou_th
+        curr_sel_idx = None
+        idx = 0
+        for b_true,class_true in not_matching_golden:
+    '''
+
+    
+
 def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
 
     #TODO FIX => DO THE OPPOSITE => FOR EACH PREDICTION CHECK FOR A LABEL (and return the list of max iou for each box)
