@@ -7,6 +7,7 @@ A Keras implementation of YOLOv3 (Tensorflow backend) inspired by [allanzelener/
 No big changes:
 - Changed some import to make it tensorflow 2.x compatible
 - Added a Loading example that do not use terminal args as inputs but constants in code.
+- [TUTORIAL](example_tutorial.md)
   
 ## What You Will Learn
 * How to load your custom image detection data from Roboflow
