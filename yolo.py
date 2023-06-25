@@ -246,12 +246,13 @@ class YOLO(object):
 
         self.input_image_shape =  [image.size[1], image.size[0]]
         out_boxes, out_scores, out_classes = yolo_eval(yolo_out, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
-        y_true = tf.constant(y_true,dtype=tf.float32)
+        
         #print("PRED")
         #print(out_boxes)
         #print("YTRUE")
         #print(y_true[0])
         if y_true:
+            y_true = tf.constant(y_true,dtype=tf.float32)
             y_true          = np.hsplit(y_true[0],[4,5])
             y_true_boxes    = y_true[0]
             y_true_classes  = y_true[1]

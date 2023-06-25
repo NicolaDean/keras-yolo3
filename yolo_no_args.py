@@ -72,8 +72,8 @@ def _main():
         
         img = np.uint8(data[0]*255)
         img = Image.fromarray(img)
-        r_image = yolo.detect_image(img,y_true=boxes)#[labels_1,labels_2,labels_3]
-        r_image.show()
+        r_image = yolo.detect_image(img)#[labels_1,labels_2,labels_3]
+        r_image[0].show()
         ex = input('press a key')
         if ex == 'q':
             exit()
