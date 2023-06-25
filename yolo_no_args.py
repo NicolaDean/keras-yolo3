@@ -15,20 +15,20 @@ from yolo import YOLO, detect_video
 from train import *
 
 def _main():
-    # './export/_annotations.txt'
+
     annotation_path = './test/_annotations.txt'
-    log_dir = 'logs/000/'
-    # './export/_annotations.txt'
-    classes_path = './test/_classes.txt'
-    anchors_path = 'model_data/yolo_anchors.txt'
+    classes_path    = './test/_classes.txt'
+    anchors_path    = 'model_data/yolo_anchors.txt'
+
     class_names = get_classes(classes_path)
+    num_classes = len(class_names)
+    anchors     = get_anchors(anchors_path)
+    input_shape = (416,416) # multiple of 32, hw
+
     print("-------------------CLASS NAMES-------------------")
     print(class_names)
     print("-------------------CLASS NAMES-------------------")
-    num_classes = len(class_names)
-    anchors = get_anchors(anchors_path)
-
-    input_shape = (416,416) # multiple of 32, hw
+    
 
     with open(annotation_path) as f:
         lines = f.readlines()
