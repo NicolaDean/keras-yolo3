@@ -96,7 +96,7 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
     print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}]")
     print("-"*20)
 
-    return precision,recall,f1_score
+    return precision,recall,f1_score, TP, FP, FN
 
     ''' 
     #For each Expected label extract the best matching box with True Label(Same class and best IOU)
@@ -215,7 +215,7 @@ class YOLO(object):
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
-    def detect_image(self, image,y_true = None):
+    def detect_image(self, image,y_true = None, no_draw = False):
         start = timer()
 
         if self.model_image_size != (None, None):
@@ -263,45 +263,46 @@ class YOLO(object):
 
             print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
-        #font = ImageFont.truetype(font='font/FiraMono-Medium.otf',size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-        font = font = ImageFont.load_default()
-        thickness = (image.size[0] + image.size[1]) // 300
+        if not no_draw:
+            #font = ImageFont.truetype(font='font/FiraMono-Medium.otf',size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+            font = font = ImageFont.load_default()
+            thickness = (image.size[0] + image.size[1]) // 300
 
 
-        for i, c in reversed(list(enumerate(out_classes))):
-            predicted_class = self.class_names[c]
-            box = out_boxes[i]
-            score = out_scores[i]
+            for i, c in reversed(list(enumerate(out_classes))):
+                predicted_class = self.class_names[c]
+                box = out_boxes[i]
+                score = out_scores[i]
 
-            label = '{} {:.2f}'.format(predicted_class, score)
-            draw = ImageDraw.Draw(image)
-            label_size = draw.textsize(label, font)
+                label = '{} {:.2f}'.format(predicted_class, score)
+                draw = ImageDraw.Draw(image)
+                label_size = draw.textsize(label, font)
 
-            top, left, bottom, right = box
-            top = max(0, np.floor(top + 0.5).astype('int32'))
-            left = max(0, np.floor(left + 0.5).astype('int32'))
-            bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
-            right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-            print(label, (left, top), (right, bottom))
+                top, left, bottom, right = box
+                top = max(0, np.floor(top + 0.5).astype('int32'))
+                left = max(0, np.floor(left + 0.5).astype('int32'))
+                bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
+                right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
+                print(label, (left, top), (right, bottom))
 
-            if top - label_size[1] >= 0:
-                text_origin = np.array([left, top - label_size[1]])
-            else:
-                text_origin = np.array([left, top + 1])
+                if top - label_size[1] >= 0:
+                    text_origin = np.array([left, top - label_size[1]])
+                else:
+                    text_origin = np.array([left, top + 1])
 
-            # My kingdom for a good redistributable image drawing library.
-            for i in range(thickness):
+                # My kingdom for a good redistributable image drawing library.
+                for i in range(thickness):
+                    draw.rectangle(
+                        [left + i, top + i, right - i, bottom - i],
+                        outline=self.colors[c])
                 draw.rectangle(
-                    [left + i, top + i, right - i, bottom - i],
-                    outline=self.colors[c])
-            draw.rectangle(
-                [tuple(text_origin), tuple(text_origin + label_size)],
-                fill=self.colors[c])
-            draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-            del draw
+                    [tuple(text_origin), tuple(text_origin + label_size)],
+                    fill=self.colors[c])
+                draw.text(text_origin, label, fill=(0, 0, 0), font=font)
+                del draw
 
-        end = timer()
-        print(end - start)
+            end = timer()
+            print(end - start)
 
         if not y_true:
             return image,out_boxes, out_scores, out_classes

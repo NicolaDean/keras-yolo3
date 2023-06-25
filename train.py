@@ -3,6 +3,7 @@ Retrain the YOLO model for your own dataset.
 """
 
 import numpy as np
+from PIL import Image
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
@@ -167,7 +168,7 @@ def create_tiny_model(input_shape, anchors, num_classes, load_pretrained=True, f
 
     return model
 
-def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes):
+def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random):
     '''data generator for fit_generator'''
     n = len(annotation_lines)
     i = 0
@@ -175,9 +176,10 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
         image_data = []
         box_data = []
         for b in range(batch_size):
-            if i==0:
-                np.random.shuffle(annotation_lines)
-            image, box = get_random_data(folder_path,annotation_lines[i], input_shape, random=True)
+            if random:
+                if i==0:
+                    np.random.shuffle(annotation_lines)    
+            image, box = get_random_data(folder_path,annotation_lines[i], input_shape, random=random)
             #box = box[~np.all(box == 0, axis=1)]
             #print(batch_size)
             #print(box)
@@ -191,10 +193,10 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
 
         yield [image_data, *y_true], np.zeros(batch_size), box_data
 
-def data_generator_wrapper(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes):
+def data_generator_wrapper(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random= True):
     n = len(annotation_lines)
     if n==0 or batch_size<=0: return None
-    return data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes)
+    return data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random)
 
 if __name__ == '__main__':
     _main()
