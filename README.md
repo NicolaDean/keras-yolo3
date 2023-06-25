@@ -4,7 +4,10 @@
 
 A Keras implementation of YOLOv3 (Tensorflow backend) inspired by [allanzelener/YAD2K](https://github.com/allanzelener/YAD2K).
 ## Differences with original Repo:
-No big changes, simply changed some import to make it tensorflow 2.x compatible
+No big changes:
+- Changed some import to make it tensorflow 2.x compatible
+- Added a Loading example that do not use terminal args as inputs but constants in code.
+  
 ## What You Will Learn
 * How to load your custom image detection data from Roboflow
 * How set up the YOLOv3 model in keras
