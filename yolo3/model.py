@@ -229,7 +229,7 @@ def yolo_eval(yolo_outputs,
         box_scores.append(_box_scores)
     boxes = tf.concat(boxes, axis=0)
     box_scores = tf.concat(box_scores, axis=0)
-
+    
     mask = box_scores >= score_threshold
     max_boxes_tensor = tf.constant(max_boxes, dtype='int32')
     boxes_ = []

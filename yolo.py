@@ -235,7 +235,7 @@ class YOLO(object):
             
         yolo_out = self.yolo_model.predict(image_data)
         
-
+        
         '''
         if y_true:
             print(f"Banana = {self.class_names}")
