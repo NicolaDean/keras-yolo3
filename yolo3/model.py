@@ -341,6 +341,7 @@ def box_iou(b1, b2):
     '''
 
     # Expand dim to apply broadcasting.
+
     b1 = tf.expand_dims(b1, -2)
     b1_xy = b1[..., :2]
     b1_wh = b1[..., 2:4]
