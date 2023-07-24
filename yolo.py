@@ -43,7 +43,7 @@ def compute_map():
             '''
             pass
 
-def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5):
+def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5,verbose=True):
 
     out_boxes   = out_boxes.numpy().tolist()
     out_classes = out_classes.numpy().tolist()
@@ -65,6 +65,7 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
 
             #print(f"[{pred_class}] vs [{class_true}]")
             if pred_class == class_true:
+                #print("Match")
                 tmp = box_iou(b_true,b_pred)
                 #Check if this BB is a best match than the previous one
                 if tmp > iou_tmp:
@@ -91,10 +92,11 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
     if precision + recall != 0:
         f1_score  = (2*precision*recall)/(precision + recall)
 
-    print("-"*20)
-    print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
-    print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}]")
-    print("-"*20)
+    if verbose:
+        print("-"*20)
+        print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
+        print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}]")
+        print("-"*20)
 
     return precision,recall,f1_score, TP, FP, FN
 
@@ -187,7 +189,7 @@ class YOLO(object):
         except:
             self.yolo_model = tiny_yolo_body(Input(shape=(None,None,3)), num_anchors//2, num_classes) \
                 if is_tiny_version else yolo_body(Input(shape=(None,None,3)), num_anchors//3, num_classes)
-            self.yolo_model.load_weights(self.model_path) # make sure model, anchors and classes match
+            self.yolo_model.load_weights(self.model_path,skip_mismatch=True,by_name=True,) # make sure model, anchors and classes match
         else:
             assert self.yolo_model.layers[-1].output_shape[-1] == \
                 num_anchors/len(self.yolo_model.output) * (num_classes + 5), \
@@ -215,7 +217,7 @@ class YOLO(object):
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,len(self.class_names), self.input_image_shape,score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
-    def detect_image(self, image,y_true = None, no_draw = False):
+    def detect_image(self, image,y_true = None, no_draw = False,verbose=True):
         start = timer()
 
         if self.model_image_size != (None, None):
@@ -229,11 +231,11 @@ class YOLO(object):
 
         image_data = np.array(boxed_image, dtype='float32')
 
-        print(image_data.shape)
+        #print(image_data.shape)
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
             
-        yolo_out = self.yolo_model.predict(image_data)
+        yolo_out = self.yolo_model.predict(image_data,verbose=verbose)
         
         
         '''
@@ -284,7 +286,8 @@ class YOLO(object):
                 left = max(0, np.floor(left + 0.5).astype('int32'))
                 bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
                 right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-                print(label, (left, top), (right, bottom))
+                if verbose:
+                    print(label, (left, top), (right, bottom))
 
                 if top - label_size[1] >= 0:
                     text_origin = np.array([left, top - label_size[1]])
@@ -303,7 +306,8 @@ class YOLO(object):
                 del draw
 
             end = timer()
-            print(end - start)
+            if verbose:
+                print(end - start)
 
         if not y_true:
             return image,out_boxes, out_scores, out_classes

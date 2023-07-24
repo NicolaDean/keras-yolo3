@@ -168,7 +168,7 @@ def create_tiny_model(input_shape, anchors, num_classes, load_pretrained=True, f
 
     return model
 
-def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random):
+def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random,keep_label=False):
     '''data generator for fit_generator'''
     n = len(annotation_lines)
     i = 0
@@ -191,13 +191,15 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
         
         y_true = preprocess_true_boxes(box_data, input_shape, anchors, num_classes)
 
-        #yield [image_data, *y_true], np.zeros(batch_size), box_data
-        yield [image_data, *y_true], np.zeros(batch_size)
+        if keep_label:
+            yield [image_data, *y_true], np.zeros(batch_size), box_data
+        else:
+            yield [image_data, *y_true], np.zeros(batch_size)
 
-def data_generator_wrapper(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random= True):
+def data_generator_wrapper(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random= True,keep_label=False):
     n = len(annotation_lines)
     if n==0 or batch_size<=0: return None
-    return data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random)
+    return data_generator(folder_path,annotation_lines, batch_size, input_shape, anchors, num_classes, random,keep_label=keep_label)
 
 if __name__ == '__main__':
     _main()
