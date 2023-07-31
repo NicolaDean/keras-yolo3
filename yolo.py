@@ -65,8 +65,14 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
 
             #print(f"[{pred_class}] vs [{class_true}]")
             if pred_class == class_true:
-                #print("Match")
-                tmp = box_iou(b_true,b_pred)
+                tmp = custom_iou(b_true,b_pred)
+                '''
+                print('----------------------------')
+                print(f"Match: { tmp}")
+                print(f'TRUE: {b_true}{class_true}')
+                print(f'PRED: {b_pred}{pred_class}')
+                print('----------------------------')
+                '''
                 #Check if this BB is a best match than the previous one
                 if tmp > iou_tmp:
                     iou_tmp = tmp
@@ -85,11 +91,11 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
     FP = len(out_boxes)
 
     #Compute Precision, Recall, F1_score
-    if TP + FP != 0:
+    if (TP + FP) != 0:
         precision = TP / (TP + FP) 
-    if TP + FN != 0:
+    if (TP + FN) != 0:
         recall    = TP / (TP + FN)
-    if precision + recall != 0:
+    if (precision + recall) != 0:
         f1_score  = (2*precision*recall)/(precision + recall)
 
     if verbose:
@@ -110,6 +116,32 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
     '''
 
     
+def custom_iou(b_true,b_pred):
+    # coordinates of the area of intersection.
+    ix1 = np.maximum(b_true[0], b_pred[0])
+    iy1 = np.maximum(b_true[1], b_pred[1])
+    ix2 = np.minimum(b_true[2], b_pred[2])
+    iy2 = np.minimum(b_true[3], b_pred[3])
+     
+    # Intersection height and width.
+    i_height = np.maximum(iy2 - iy1 + 1, np.array(0.))
+    i_width = np.maximum(ix2 - ix1 + 1, np.array(0.))
+     
+    area_of_intersection = i_height * i_width
+     
+    # Ground Truth dimensions.
+    gt_height = b_true[3] - b_true[1] + 1
+    gt_width = b_true[2] - b_true[0] + 1
+     
+    # Prediction dimensions.
+    pd_height = b_pred[3] - b_pred[1] + 1
+    pd_width = b_pred[2] - b_pred[0] + 1
+     
+    area_of_union = gt_height * gt_width + pd_height * pd_width - area_of_intersection
+     
+    iou = area_of_intersection / area_of_union
+     
+    return iou
 
 def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
 
