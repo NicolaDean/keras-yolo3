@@ -400,6 +400,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False,cus
     m = tf.shape(yolo_outputs[0])[0] # batch size, tensor
     mf = tf.cast(m, yolo_outputs[0].dtype)
 
+    
     for l in range(num_layers):
         object_mask = y_true[l][..., 4:5]
         true_class_probs = y_true[l][..., 5:]
