@@ -61,15 +61,9 @@ def get_random_data(folder_path,annotation_line, input_shape, random=True, max_b
         box_data = np.zeros((max_boxes,5))
         if len(box)>0:
             np.random.shuffle(box)
+            if len(box)>max_boxes: box = box[:max_boxes]
             box[:, [0,2]] = box[:, [0,2]]*scale + dx
             box[:, [1,3]] = box[:, [1,3]]*scale + dy
-            box[:, 0:2][box[:, 0:2]<0] = 0
-            box[:, 2][box[:, 2]>w] = w
-            box[:, 3][box[:, 3]>h] = h
-            box_w = box[:, 2] - box[:, 0]
-            box_h = box[:, 3] - box[:, 1]
-            box = box[np.logical_and(box_w>1, box_h>1)] # discard invalid box
-            if len(box)>max_boxes: box = box[:max_boxes]
             box_data[:len(box)] = box
 
         return image_data, box_data
