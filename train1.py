@@ -188,7 +188,7 @@ def data_generator(folder_path,annotation_lines, batch_size, input_shape, anchor
             i = (i+1) % n
         image_data = np.array(image_data)
         box_data = np.array(box_data)
-        
+
         y_true = preprocess_true_boxes(box_data, input_shape, anchors, num_classes)
 
         if keep_label:
