@@ -98,6 +98,12 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
     if (precision + recall) != 0:
         f1_score  = (2*precision*recall)/(precision + recall)
 
+    #Case where true label is empty
+    if (TP + FN + FP) == 0:
+        precision = 1
+        recall    = 1
+        f1_score  = 1
+
     if verbose:
         print("-"*20)
         print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
