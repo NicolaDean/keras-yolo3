@@ -393,7 +393,6 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False,cus
         yolo_outputs = args[:num_layers]
         y_true = args[num_layers:]
 
-
     anchor_mask = [[6,7,8], [3,4,5], [0,1,2]] if num_layers==3 else [[3,4,5], [1,2,3]]
     input_shape = tf.cast(tf.shape(yolo_outputs[0])[1:3] * 32, y_true[0].dtype)
     grid_shapes = [tf.cast(tf.shape(yolo_outputs[l])[1:3], y_true[0].dtype) for l in range(num_layers)]
