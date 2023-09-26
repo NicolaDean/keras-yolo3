@@ -56,9 +56,18 @@ def get_random_data(folder_path,annotation_line, input_shape, random=True, max_b
             new_image = Image.new('RGB', (w,h), (128,128,128))
             new_image.paste(image, (dx, dy))
             image_data = np.array(new_image)/255.
+        else:
+            from six import BytesIO
+            import tensorflow as tf
+            #print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+            img_data    = tf.io.gfile.GFile(img_name, 'rb').read()
+            new_image   = Image.open(BytesIO(img_data))
+            (im_width, im_height) = new_image.size
+            image_data =np.array(new_image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
 
         # correct boxes
-        box_data = np.zeros((max_boxes,5))
+        box_data = np.zeros((max_boxes,5)) 
+        
         if len(box)>0:
             np.random.shuffle(box)
             box[:, [0,2]] = box[:, [0,2]]*scale + dx

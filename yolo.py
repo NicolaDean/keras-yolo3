@@ -43,10 +43,12 @@ def compute_map():
             '''
             pass
 
-def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5,verbose=True):
+def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5,verbose=True,convert_format=True):
 
-    out_boxes   = out_boxes.numpy().tolist()
-    out_classes = out_classes.numpy().tolist()
+    if convert_format:
+        out_boxes   = out_boxes.numpy().tolist()
+        out_classes = out_classes.numpy().tolist()
+        
     TP = 0
     FP = 0
     FN = 0
@@ -62,7 +64,7 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
         curr_sel_idx = None
         idx = 0
         for b_pred,pred_class in zip(out_boxes,out_classes):
-
+            #print(f'CONFRONT [{pred_class} => {class_true}]')
             #print(f"[{pred_class}] vs [{class_true}]")
             if pred_class == class_true:
                 tmp = custom_iou(b_true,b_pred)
@@ -146,7 +148,7 @@ def custom_iou(b_true,b_pred):
     area_of_union = gt_height * gt_width + pd_height * pd_width - area_of_intersection
      
     iou = area_of_intersection / area_of_union
-     
+    #print(f'IOU: {iou}')
     return iou
 
 def compute_iou(y_true_boxes,y_true_classes,out_boxes, out_scores, out_classes):
