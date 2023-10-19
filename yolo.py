@@ -43,6 +43,86 @@ def compute_map():
             '''
             pass
 
+
+def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5,verbose=True,convert_format=True):
+    if convert_format:
+        out_boxes   = out_boxes.numpy().tolist()
+        out_classes = out_classes.numpy().tolist()
+
+    TP = 0
+    FP = 0
+    FN = 0
+    #TN Do not exist in Object detection => Is the background
+
+    precision = 0
+    recall    = 0
+    f1_score  = 0
+
+    matrix_iou = []
+
+    #computing all the IOU values, among all the boxes with same class
+    for b_true,class_true in zip(y_true_boxes,y_true_classes):
+        ious = []
+        for b_pred,pred_class in zip(out_boxes,out_classes):
+            iou_temp = 0
+            if class_true == pred_class:
+                iou_temp = custom_iou(b_true,b_pred)
+                
+            ious.append(iou_temp)
+        matrix_iou.append(ious)
+
+    not_matched_GT =np.ones(len(y_true_classes))
+    not_matched_PR =np.ones(len(out_classes))
+    #assign matches
+    matrix_iou = np.array(matrix_iou)
+    while True:
+        cond = np.array(matrix_iou >= iou_th)
+        #If there is at least one column with IOU > threshold
+        if cond.sum() == 0:
+            break
+        
+        i, j = np.unravel_index(matrix_iou.argmax(), matrix_iou.shape)
+
+        TP += 1
+
+        matrix_iou[i, :] = np.zeros(matrix_iou.shape[1])
+        matrix_iou[:, j] = np.zeros(matrix_iou.shape[0])
+        not_matched_GT[i] = 0
+        not_matched_PR[j] = 0
+
+    FP = not_matched_PR.sum()
+    FN = not_matched_GT.sum()
+
+    #Compute Precision, Recall, F1_score
+    if (TP + FP) != 0:
+        precision = TP / (TP + FP) 
+    if (TP + FN) != 0:
+        recall    = TP / (TP + FN)
+    if (precision + recall) != 0:
+        f1_score  = (2*precision*recall)/(precision + recall)
+    if (FP+FN+TP) != 0:
+        accuracy_score = (TP) / (FP+FN+TP)
+    else:
+        accuracy_score = None
+
+    #Case where true label is empty
+    if (TP + FN + FP) == 0:
+        precision = 1
+        recall    = 1
+        f1_score  = 1
+        accuracy_score = 1
+
+    if verbose:
+        print("-"*20)
+        print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
+        print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}], accuracy: [{accuracy_score}]")
+        print("-"*20)
+
+    return precision,recall,f1_score, TP, FP, FN
+        
+'''    
+
+
 def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0.5,verbose=True,convert_format=True):
 
     if convert_format:
@@ -68,13 +148,15 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
             #print(f"[{pred_class}] vs [{class_true}]")
             if pred_class == class_true:
                 tmp = custom_iou(b_true,b_pred)
-                '''
+        '''
+'''
                 print('----------------------------')
                 print(f"Match: { tmp}")
                 print(f'TRUE: {b_true}{class_true}')
                 print(f'PRED: {b_pred}{pred_class}')
                 print('----------------------------')
-                '''
+'''
+'''
                 #Check if this BB is a best match than the previous one
                 if tmp > iou_tmp:
                     iou_tmp = tmp
@@ -99,22 +181,27 @@ def compute_F1_score(y_true_boxes,y_true_classes,out_boxes, out_classes,iou_th=0
         recall    = TP / (TP + FN)
     if (precision + recall) != 0:
         f1_score  = (2*precision*recall)/(precision + recall)
+    if (FP+FN+TP) != 0:
+        accuracy_score = (TP) / (FP+FN+TP)
+    else:
+        accuracy_score = None
 
     #Case where true label is empty
     if (TP + FN + FP) == 0:
         precision = 1
         recall    = 1
         f1_score  = 1
+        accuracy_score = 1
 
     if verbose:
         print("-"*20)
         print(f"Sample statistics => TP [{TP}] , FP [{FP}], FN [{FN}]")
-        print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}]")
+        print(f"precison: [{precision}] , recall: [{recall}], f1_score: [{f1_score}], accuracy: [{accuracy_score}]")
         print("-"*20)
 
     return precision,recall,f1_score, TP, FP, FN
-
-    ''' 
+    '''
+''' 
     #For each Expected label extract the best matching box with True Label(Same class and best IOU)
     for b_pred,pred_class in zip(out_boxes,out_classes):
         iou_tmp = iou_th
